@@ -1,0 +1,5 @@
+/.idea
+/docker/postgresql-data
+/docker/php-fpm/composer.json
+/docker/php-fpm/composer.lock
+/docker/php-fpm/source.tar.gz

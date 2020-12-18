@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  php-fpm:
+    build:
+      context: ./docker/php-fpm
+    networks:
+      - korhov-sibn-net
+    #volumes: # Если без build.sh то можно раскомментировать
+    #  - ./app:/symfony
+    container_name: php-fpm
+    depends_on:
+      - postgres
+      - php-fpm-migrate
+  php-fpm-migrate: # Только для выполнения миграций, запускать только один экземпляр, php-fpm можно запустить в несколько экземпляров
+    build:
+      context: ./docker/php-fpm
+    restart: on-failure
+    networks:
+      - korhov-sibn-net
+    #volumes: # Если без build.sh то можно раскомментировать
+    #  - ./app:/symfony
+    container_name: php-fpm-migrate
+    command: bin/console doctrine:migrations:migrate --no-interaction
+    depends_on:
+      - postgres
+  nginx:
+    build:
+      context: ./docker/nginx
+    networks:
+      - korhov-sibn-net
+    volumes:
+      - ./app:/symfony
+    container_name: nginx
+    restart: always
+    ports:
+      - "8011:80"
+  postgres:
+    build:
+      context: ./docker/postgres
+    container_name: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    networks:
+      - korhov-sibn-net
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: sibn
+      POSTGRES_DB: sibn
+    volumes:
+      - korhov-database-data:/var/lib/postgresql/data/
+
+volumes:
+  korhov-database-data: # named volumes can be managed easier using docker-compose
+    driver: local
+networks:
+  korhov-sibn-net:
+    driver: bridge
